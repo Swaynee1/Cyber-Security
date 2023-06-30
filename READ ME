@@ -1,0 +1,6 @@
+Replace '<SSH_PORT>' with the actual port number you use for SSH access.
+Uncomment and customize the lines for any additional services you want to allow through the firewall by replacing '<SERVICE_PORT>' with the respective port numbers.
+Uncomment or modify any other rules based on your specific requirements. For example, you can add specific rules to block or restrict access to certain IP addresses or IP ranges.
+Save the script with a '.sh extension '(e.g., firewall.sh).'
+Make the script executable with the command 'chmod '+x firewall.sh.'
+Run the script with superuser privileges using 'sudo './firewall.sh.'
