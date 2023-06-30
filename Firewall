@@ -1,0 +1,60 @@
+```bash
+#!/bin/bash
+
+# Flush existing rules and chains
+iptables -F
+iptables -X
+
+# Set default policy to drop incoming and outgoing traffic
+iptables -P INPUT DROP
+iptables -P OUTPUT DROP
+iptables -P FORWARD DROP
+
+# Allow loopback traffic
+iptables -A INPUT -i lo -j ACCEPT
+iptables -A OUTPUT -o lo -j ACCEPT
+
+# Allow established and related incoming connections
+iptables -A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+
+# Allow SSH (replace <SSH_PORT> with the actual port number)
+iptables -A INPUT -p tcp --dport <SSH_PORT> -j ACCEPT
+
+# Allow specific services (replace <SERVICE_PORT> with the actual port numbers)
+#iptables -A INPUT -p tcp --dport <SERVICE_PORT> -j ACCEPT
+#iptables -A INPUT -p udp --dport <SERVICE_PORT> -j ACCEPT
+
+# Allow ICMP (optional, uncomment if needed)
+#iptables -A INPUT -p icmp -j ACCEPT
+
+# Block common attack patterns
+iptables -A INPUT -m string --string "DROP DATABASE" --algo bm -j DROP
+iptables -A INPUT -m string --string "exec\(" --algo bm -j DROP
+iptables -A INPUT -m string --string "system\(" --algo bm -j DROP
+iptables -A INPUT -m string --string "passthru\(" --algo bm -j DROP
+
+# Limit the rate of incoming connections per IP address
+iptables -A INPUT -p tcp -m connlimit --connlimit-above 20 --connlimit-mask 32 -j REJECT --reject-with tcp-reset
+iptables -A INPUT -p icmp -m connlimit --connlimit-above 10 --connlimit-mask 32 -j REJECT --reject-with icmp-port-unreachable
+
+# Limit the rate of incoming SSH connection attempts per IP address
+iptables -A INPUT -p tcp --dport <SSH_PORT> -m recent --name SSH --set -j ACCEPT
+iptables -A INPUT -p tcp --dport <SSH_PORT> -m recent --name SSH --update --seconds 60 --hitcount 4 -j DROP
+
+# Enable SYN flood protection
+iptables -A INPUT -p tcp --syn -m limit --limit 1/s -j ACCEPT
+
+# Enable port knocking for additional SSH security
+iptables -N KNOCKING
+iptables -A INPUT -m recent --rcheck --name SSH_KNOCK --rsource -j ACCEPT
+iptables -A INPUT -m recent --remove --name SSH_KNOCK --rsource -j DROP
+iptables -A INPUT -m recent --rcheck --name SSH --rsource -j ACCEPT
+iptables -A INPUT -m recent --remove --name SSH --rsource -j DROP
+iptables -A INPUT -j KNOCKING
+iptables -A KNOCKING -m recent --set --name SSH_KNOCK --rsource -j DROP
+iptables -A KNOCKING -p tcp --dport <PORT1> -m recent --rcheck --name SSH_KNOCK --rsource -j ACCEPT
+iptables -A KNOCKING -p tcp --dport <PORT2> -m recent --rcheck --name SSH_KNOCK --rsource -j ACCEPT
+iptables -A KNOCKING -p tcp --dport <PORT3> -m recent --rcheck --name SSH_KNOCK --rsource -j ACCEPT
+iptables -A KNOCKING -j DROP
+
+# Enable rate
