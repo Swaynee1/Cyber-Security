@@ -1,0 +1,86 @@
+import threading
+
+
+class ConcurrentHashMap:
+    def __init__(self):
+        self.locks = [threading.Lock()] * 16  # Array of locks
+        self.buckets = [[] for _ in range(16)]  # Array of buckets
+
+    def _hash_function(self, key):
+        return hash(key) % 16
+
+    def put(self, key, value):
+        index = self._hash_function(key)
+        lock = self.locks[index]
+        with lock:
+            bucket = self.buckets[index]
+            for i, (k, _) in enumerate(bucket):
+                if k == key:
+                    bucket[i] = (key, value)  # Update existing key-value pair
+                    return
+            bucket.append((key, value))  # Add new key-value pair
+
+    def get(self, key):
+        index = self._hash_function(key)
+        lock = self.locks[index]
+        with lock:
+            bucket = self.buckets[index]
+            for k, v in bucket:
+                if k == key:
+                    return v  # Return value if key is found
+            return None  # Return None if key is not found
+
+    def remove(self, key):
+        index = self._hash_function(key)
+        lock = self.locks[index]
+        with lock:
+            bucket = self.buckets[index]
+            for i, (k, _) in enumerate(bucket):
+                if k == key:
+                    del bucket[i]  # Remove key-value pair if key is found
+                    return
+
+    def contains(self, key):
+        index = self._hash_function(key)
+        lock = self.locks[index]
+        with lock:
+            bucket = self.buckets[index]
+            for k, _ in bucket:
+                if k == key:
+                    return True  # Return True if key is found
+            return False  # Return False if key is not found
+
+    def keys(self):
+        keys = []
+        for bucket in self.buckets:
+            with threading.Lock():
+                keys.extend([k for k, _ in bucket])
+        return keys
+
+    def values(self):
+        values = []
+        for bucket in self.buckets:
+            with threading.Lock():
+                values.extend([v for _, v in bucket])
+        return values
+
+    def items(self):
+        all_items = []
+        for bucket in self.buckets:
+            with threading.Lock():
+                all_items.extend(bucket)
+        return all_items
+
+    def size(self):
+        total_size = 0
+        for bucket in self.buckets:
+            with threading.Lock():
+                total_size += len(bucket)
+        return total_size
+
+    def is_empty(self):
+        for bucket in self.buckets:
+            with threading.Lock():
+                if len(bucket) > 0:
+                    return False
+        return True
