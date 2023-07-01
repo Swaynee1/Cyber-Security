@@ -1,0 +1,22 @@
+make sure to have an threat intell api ready for it system maybe virus toatl?
+Description:
+This Python code provides a Threat Intelligence Analyzer that leverages the Threat Intelligence Platform API to fetch and analyze threat data for given indicators. It allows users to input their API key and an indicator to perform analysis and take appropriate actions based on the threat data.
+
+Features:
+
+Fetches threat data from the Threat Intelligence Platform API
+Performs threat intelligence analysis on the fetched data
+Calculates a threat score based on severity level
+Identifies correlated indicators based on tags or similar attributes
+Implements custom analysis logic and mitigation actions
+Extracts additional information, such as country, for further analysis
+Provides flexibility to handle and present errors using custom exceptions
+Usage:
+
+Input your Threat Intelligence Platform API key
+Specify the indicator you want to analyze
+The code will fetch the threat data, perform analysis, and display the results
+It calculates the threat score, identifies correlated indicators, and performs custom analysis based on the threat data
+If the indicator is classified as malicious, it suggests mitigation actions
+The code also allows for country-based analysis and actions
+Note: Make sure to replace the placeholder API key in the code with your own valid API key to access the Threat Intelligence Platform API.
