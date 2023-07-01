@@ -1,0 +1,31 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def detect_anomalies(data):
+    mean = np.mean(data)
+    std = np.std(data)
+    
+    # Threshold selection using Median Absolute Deviation (MAD)
+    mad = np.median(np.abs(data - mean))
+    threshold = 3 * mad
+    
+    # Detect anomalies based on the threshold
+    anomalies = data[np.abs(data - mean) > threshold]
+    
+    return anomalies
+
+# Generate sample data
+data = np.concatenate((np.random.normal(0, 1, 900), np.random.normal(5, 1, 100)))
+
+# Detect anomalies
+anomalies = detect_anomalies(data)
+print("Detected Anomalies:", anomalies)
+
+# Plot the data and detected anomalies
+plt.plot(data, label='Data')
+plt.scatter(np.arange(len(data)), anomalies, color='red', label='Anomalies')
+plt.axhline(y=np.mean(data), color='green', linestyle='--', label='Mean')
+plt.axhline(y=np.mean(data) + threshold, color='orange', linestyle='--', label='Upper Threshold')
+plt.axhline(y=np.mean(data) - threshold, color='orange', linestyle='--', label='Lower Threshold')
+plt.legend()
+plt.show()
