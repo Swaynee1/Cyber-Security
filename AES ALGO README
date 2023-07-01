@@ -1,0 +1,6 @@
+Make sure to download Crypto.Cipher.AES, pycryptodome and maybe Pillow before runnig code okay!
+Encrypt your precious images with the power of AES algorithm!
+This user-friendly code lets you protect your images from prying eyes. 
+Just provide the path to your image, and voila! The code generates a secret key, saves it in a special place, 
+and turns your image into an encrypted masterpiece.
+Decrypting is a breeze too, with the key securely loaded. Your images will be safe and sound okay bye bye!
