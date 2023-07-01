@@ -1,0 +1,130 @@
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+from Crypto.Random import get_random_bytes
+from PIL import Image
+import os
+
+
+def generate_key(key_size=16):
+    # Generate a random key of the specified size (default: 16 bytes for AES-128)
+    return get_random_bytes(key_size)
+
+
+def save_key(key, key_file):
+    # Save the key to a file
+    with open(key_file, "wb") as f:
+        f.write(key)
+
+
+def load_key(key_file):
+    # Load the key from a file
+    with open(key_file, "rb") as f:
+        key = f.read()
+    return key
+
+
+def encrypt_image(image_path, key):
+    try:
+        # Load the image
+        image = Image.open(image_path)
+        # Convert the image to RGB mode if needed
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+        # Get the image data as bytes
+        image_data = image.tobytes()
+
+        # Generate a random initialization vector (IV)
+        iv = get_random_bytes(AES.block_size)
+        # Create the AES cipher object
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        # Encrypt the image data
+        encrypted_data = cipher.encrypt(pad(image_data, AES.block_size))
+
+        # Create a new image with the encrypted data
+        encrypted_image = Image.frombytes(image.mode, image.size, encrypted_data)
+
+        # Save the encrypted image
+        encrypted_image_path = image_path.replace(".jpg", "_encrypted.jpg")
+        encrypted_image.save(encrypted_image_path)
+
+        return encrypted_image_path
+    except IOError:
+        print("Error: Failed to encrypt the image.")
+        return None
+
+
+def decrypt_image(encrypted_image_path, key):
+    try:
+        # Load the encrypted image
+        encrypted_image = Image.open(encrypted_image_path)
+        # Get the encrypted image data as bytes
+        encrypted_data = encrypted_image.tobytes()
+
+        # Extract the initialization vector (IV) from the encrypted image data
+        iv = encrypted_data[:AES.block_size]
+        # Create the AES cipher object
+        cipher = AES.new(key, AES.MODE_CBC, iv)
+        # Decrypt the image data
+        decrypted_data = unpad(cipher.decrypt(encrypted_data[AES.block_size:]), AES.block_size)
+
+        # Create a new image with the decrypted data
+        decrypted_image = Image.frombytes(encrypted_image.mode, encrypted_image.size, decrypted_data)
+
+        # Save the decrypted image
+        decrypted_image_path = encrypted_image_path.replace("_encrypted.jpg", "_decrypted.jpg")
+        decrypted_image.save(decrypted_image_path)
+
+        return decrypted_image_path
+    except IOError:
+        print("Error: Failed to decrypt the image.")
+        return None
+
+
+def main():
+    # Prompt the user for image path
+    image_path = input("Enter the path to the image file: ")
+
+    # Check if the image file exists
+    if not os.path.isfile(image_path):
+        print("Error: Image file not found.")
+        return
+
+    try:
+        # Generate a key
+        key = generate_key()
+
+        # Prompt the user for key file path
+        key_file = input("Enter the path to save the key file: ")
+
+        # Save the key to a file
+        save_key(key, key_file)
+
+        # Encrypt the image
+        encrypted_image_path = encrypt_image(image_path, key)
+
+        if encrypted_image_path:
+            print("Image encrypted successfully.")
+
+            # Decrypt the image using the loaded key
+            loaded_key = load_key(key_file)
+            decrypted_image_path = decrypt_image(encrypted_image_path, loaded_key)
+
+            if decrypted_image_path:
+                print("Image decrypted successfully.")
+            else:
+                print("Error: Failed to decrypt the image.")
+
+        else:
+            print("Error: Failed to encrypt the image.")
+
+    except Exception as e:
+        print("An error occurred:", str(e))
+
+    # Cleanup - remove the key file
+    if os.path.isfile(key_file):
+        os.remove(key_file)
+
+
+# Run the program
+if __name__ == "__main__":
+    main()
